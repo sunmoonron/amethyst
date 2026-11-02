@@ -40,6 +40,7 @@ height="70">](https://github.com/vitorpamplona/amethyst/releases)
 | OS | CLI install | Direct download |
 |---|---|---|
 | macOS (Apple Silicon) | `brew install --cask amethyst-nostr` | [.dmg arm64](https://github.com/vitorpamplona/amethyst/releases/latest) |
+| macOS (Intel) | — | [.dmg x64](https://github.com/vitorpamplona/amethyst/releases/latest) |
 | Windows 10/11 | `winget install VitorPamplona.Amethyst` | [.msi](https://github.com/vitorpamplona/amethyst/releases/latest) · [.zip portable](https://github.com/vitorpamplona/amethyst/releases/latest) |
 | Debian/Ubuntu | — | [.deb](https://github.com/vitorpamplona/amethyst/releases/latest) |
 | Fedora/RHEL/openSUSE | — | [.rpm](https://github.com/vitorpamplona/amethyst/releases/latest) |

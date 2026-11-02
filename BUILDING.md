@@ -173,8 +173,8 @@ Compress-Archive -Path desktopApp\build\compose\binaries\main-release\app\Amethy
 ```
 
 Cross-platform architecture note: **`jpackage` cannot cross-compile**. An Intel
-DMG must be built on `macos-13` (x64); an ARM DMG must be built on `macos-14`
-or later. CI runs both.
+DMG must be built on an x64 runner (`macos-15-intel`); an ARM DMG on an arm64
+one (`macos-15`). CI runs both.
 
 ---
 
@@ -373,16 +373,19 @@ one pipeline. The Quartz library releases from its own repo
 
 3. **Wait** for the `Create Release Assets` workflow to finish (~25–30 min).
 
-4. **Verify** — the GH Release should hold **49 assets**:
-   - **14 desktop**, one per matrix leg × format:
-     - macOS arm64: `dmg` (1)
+4. **Verify** — the GH Release should hold **50 assets**:
+   - **15 desktop**, one per matrix leg × format:
+     - macOS x64 / arm64: `dmg` (2)
      - Windows x64: `msi` + portable `zip` (2)
      - Windows arm64: portable `zip` only (1) — **no arm64 MSI**, see below
      - Linux x64 / arm64: `deb` + `rpm` (4)
      - Linux-portable x64 / arm64: `AppImage` + `tar.gz` + `flatpak` (6)
 
-     There is **no Intel/x64 macOS DMG** — `jpackage` cannot cross-compile
-     and no Intel runner leg is configured, so macOS ships arm64-only.
+     The two macOS DMGs come from two runners (`macos-15-intel`, `macos-15`)
+     because `jpackage` cannot cross-compile. amy and geode stay arm64-only
+     on macOS: their event store is androidx `sqlite-bundled`, whose JVM
+     artifact ships `natives/osx_arm64` only (through 2.8.0-alpha03); the
+     desktop app never opens that store.
      There is **no Windows arm64 MSI**: `jpackage --type msi` shells out to
      WiX 3's `heat`/`candle`/`light`, and the `windows-11-arm` runner image
      ships no WiX (`windows-latest` has WiX 3.14 preinstalled, which is why
@@ -669,7 +672,7 @@ that is needed.
 > The first submission is a **new-cask** PR, which is a different flow:
 
 ```bash
-# 1. Scaffold from the published DMG (macOS arm64 — there is no Intel DMG)
+# 1. Scaffold from the published arm64 DMG (the cask gets the x64 one in an on_intel block later)
 brew create --cask \
   https://github.com/vitorpamplona/amethyst/releases/download/v1.14.0/amethyst-desktop-1.14.0-macos-arm64.dmg \
   --set-name amethyst-nostr
@@ -976,13 +979,22 @@ On any incident:
 
 ### macOS Intel runner retirement
 
-GitHub's `macos-13` runner will eventually be deprecated. Monitor
-<https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners>
-for the deprecation date. When it hits:
+The x64 macOS DMG is built on `macos-15-intel`. GitHub retired `macos-13` in
+December 2025, and its stated horizon for the remaining Intel images is about
+fall 2027; macOS 26 is the last macOS for Intel Macs, so the audience ends
+around then too. Monitor <https://github.com/actions/runner-images#available-images>
+for the date (`macos-26-intel` is the fallback if `macos-15-intel` goes first).
+When the last Intel image retires:
 
-1. Drop the `macos-13` matrix entry from `.github/workflows/create-release.yml`
-2. Add a cross-arch build step on `macos-14` using a bundled x64 JDK + `jpackage --mac-signing-prefix` shenanigans, OR accept that only Apple Silicon DMGs ship and direct Intel users to `winget` on a Parallels VM or to rebuild from source.
-3. Update README install matrix to reflect the change.
+1. Drop the `macos-15-intel` matrix entry from
+   `.github/workflows/create-release.yml`.
+2. Either build x64 on an arm64 runner (an x64 JDK under Rosetta for jlink /
+   jpackage, `compose.desktop.macos_x64` in place of `currentOs` so the x64
+   Skiko is bundled, and the video player shim built for x86_64), or accept
+   that only Apple Silicon DMGs ship and point Intel users at this file to
+   rebuild from source.
+3. Update the README install matrix, the asset counts here and in
+   RELEASE_OPS.md, and the site's download panel.
 
 ### Homebrew main-cask rejects unsigned app (post-Sept 1 2026)
 

@@ -135,16 +135,17 @@ git -c credential.helper= -c credential.helper='!gh auth git-credential' push up
 ```
 
 When the `Create Release Assets` workflow finishes (~25–30 min) the GH Release
-holds **49 assets**, per the asset-name contract:
+holds **50 assets**, per the asset-name contract:
 
 - **Android (15):** 5 Google Play APKs + 5 F-Droid APKs + 2 AABs + the F-Droid
   `.apks` set for Accrescent + the 2 R8 mappings
   (`amethyst-googleplay-*-v…apk` / `.aab`, `amethyst-fdroid-*-v…apk` / `.aab` / `.apks`,
   `amethyst-{googleplay,fdroid}-mapping-v….txt.gz`)
-- **Desktop (14):** macOS DMG (**arm64 only** — there is no Intel DMG), Windows
+- **Desktop (15):** macOS DMG (x64, arm64), Windows
   MSI (x64 only — **no arm64 MSI**) + portable zip (x64, arm64), and Linux
   DEB/RPM/AppImage/flatpak/tar.gz in both x64 and arm64. BUILDING.md § Release
-  runbook has the per-leg breakdown and why the two gaps exist.
+  runbook has the per-leg breakdown, why the MSI gap exists and why amy and
+  geode stay arm64-only on macOS.
 - **CLI (10):** the `amy` artifacts — the no-JRE `jvm.tar.gz`, macOS arm64,
   Windows x64 + arm64, and Linux DEB/RPM/tar.gz in both x64 and arm64
 - **Relay (10):** the `geode` artifacts, same matrix as `amy`. The geode Docker
@@ -157,8 +158,9 @@ holds **49 assets**, per the asset-name contract:
 
 ### GitHub Releases — automatic
 Nothing to do beyond pushing the tag. Verify the asset count (BUILDING.md
-§ Verify). macOS is **arm64-only** — there is no Intel DMG, so a single
-`amethyst-desktop-<version>-macos-arm64.dmg` is the expected, correct result.
+§ Verify). macOS ships two DMGs, `amethyst-desktop-<version>-macos-x64.dmg`
+and `-macos-arm64.dmg`; the cask points at the arm64 one until it gains an
+`on_intel` block.
 
 Two of those assets are the R8 mapping files
 (`amethyst-{googleplay,fdroid}-mapping-<version>.txt.gz`). Do not prune them
@@ -482,9 +484,9 @@ Owner assignments and rotation reminders live with the team (issue tracker).
 
 ## 6. Post-release verification
 
-- [ ] GH Release: 49 assets, sizes sane, and the asset-name set matches the
+- [ ] GH Release: 50 assets, sizes sane, and the asset-name set matches the
       previous release (see the `diff` one-liner in BUILDING.md § Release
-      runbook). macOS is arm64-only — do **not** look for an Intel DMG.
+      runbook), including both macOS DMGs (x64 and arm64).
 - [ ] Play Console: rollout started, no policy rejection.
 - [ ] Accrescent: the `.apks` upload passed the console's checks.
 - [ ] Zapstore: release event visible.

@@ -49,6 +49,11 @@ jobs:
         # jpackage / jlink / Compose Multiplatform 1.11 all produce
         # host-native artifacts — no cross-compilation needed.
         #
+        # macOS therefore needs one leg per arch. macos-15-intel is GitHub's
+        # free public-repo x64 runner (macos-13 retired in December 2025);
+        # its stated horizon is about fall 2027, see BUILDING.md § Fallback
+        # plans.
+        #
         # The arm64 Windows leg builds the portable .zip ONLY — no MSI.
         # jpackage --type msi shells out to WiX 3's heat/candle/light, and the
         # windows-11-arm runner image ships no WiX (the windows-latest image
@@ -61,6 +66,7 @@ jobs:
         # Windows users get that until either the runner image gains WiX or
         # jpackage learns the WiX 4+ CLI.
         include:
+          - { os: macos-15-intel,   arch: x64,   family: macos,          tasks: "packageReleaseDmg" }
           - { os: macos-15,         arch: arm64, family: macos,          tasks: "packageReleaseDmg" }
           - { os: windows-latest,   arch: x64,   family: windows,        tasks: "packageReleaseMsi createReleaseDistributable" }
           - { os: windows-11-arm,   arch: arm64, family: windows,        tasks: "createReleaseDistributable" }
@@ -448,6 +454,11 @@ jobs:
   # macOS legs ship only the tarball. We deliberately avoid jpackage --type
   # app-image on macOS because it produces an .app bundle (burying the binary
   # at Contents/MacOS/amy) — wrong UX for a CLI.
+  #
+  # macOS is arm64-only here, and for geode below: their event store is
+  # androidx sqlite-bundled, whose JVM artifact ships natives/osx_arm64 only
+  # (through 2.8.0-alpha03), so an x64 tarball would fail at the first query.
+  # The desktop app never opens that store, which is why it has an x64 leg.
   #
   # Windows is intentionally deferred — cli/ has not been validated on Windows
   # yet (data-dir path handling, file locking on groups/<gid>.mls, line endings
